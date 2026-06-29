@@ -15,11 +15,11 @@ Framework-agnostic core · Official React & Vue bindings · MIT licensed.
 
 ## 🗺️ Roadmap (TL;DR)
 
-We ship in priority tiers — **P0 is what we're working on right now**.
+We ship in priority tiers — **P0 baseline is complete; P1 is next**.
 
 | Tier | Theme | Highlights |
 |---|---|---|
-| **P0 — Now** | Core API completeness | `getSelectedText()`, slash command sorting, `<Editor />` `onReady`, TS strict coverage |
+| **P0 — Baseline** | Core API completeness | `getSelectedText()`, slash command sorting, `<Editor />` `onReady`, TS strict typecheck baseline |
 | **P1 — Next** | Power-user features | Multi-cursor, regex search, undo/redo grouping, widget API standardization, Electron packaging |
 | **P2 — Mid-term** | UX & ecosystem | Advanced toolbar (emoji / table / color), fuzzy search, sync-scroll preview, web-component wrapper |
 | **P3 — Long-term** | Collaboration | Realtime CRDT collab, shared comments / @mention, plugin hot-reload |
@@ -242,7 +242,14 @@ const myPlugin: NexusPlugin = {
   widgets: [{
     nodeType: "code",
     match: (node) => node.lang === "mermaid",
-    render: (node, source) => renderMermaidChart(source),
+    display: "block",        // "block" | "inline"  (canonical; replaces legacy `block`)
+    eventPolicy: "widget",   // "widget" | "editor" (canonical; replaces legacy `ignoreEvents`)
+    render: (node, source, ctx) => {
+      const el = renderMermaidChart(source);
+      // enter raw-Markdown editing from a custom affordance:
+      el.querySelector(".edit")?.addEventListener("click", () => ctx?.enterEditMode());
+      return el;
+    },
     destroy: (el) => el.remove(),
   }],
 
@@ -250,6 +257,8 @@ const myPlugin: NexusPlugin = {
   cmExtensions: [myCodeMirrorExtension],
 };
 ```
+
+> `block` and `ignoreEvents` stay supported as legacy aliases (`block: false` ≡ `display: "inline"`, `ignoreEvents: true` ≡ `eventPolicy: "widget"`); the canonical field wins when both are set. Full Widget API: [`packages/core/README.md`](./packages/core/README.md#widget-api).
 
 </details>
 
@@ -299,7 +308,7 @@ We'd love your help — whether it's a typo fix, a new plugin, or a deep core ch
 
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — branch naming, Conventional Commits scope whitelist, when to file an OpenSpec proposal, test matrix.
 - [.github/PULL_REQUEST_TEMPLATE.md](./.github/PULL_REQUEST_TEMPLATE.md) — the PR description template.
-- [openspec/AGENTS.md](./openspec/AGENTS.md) — required for new capabilities or breaking API changes.
+- [AGENTS.md](./AGENTS.md) + [openspec/config.yaml](./openspec/config.yaml) — OpenSpec 1.5 agent workflow and project rules for new capabilities or breaking API changes.
 
 > 🟢 **Good first issues** are labeled [`good first issue`](https://github.com/floatboatai/Nexus-Editor/labels/good%20first%20issue) — start there if you're new to the codebase.
 
@@ -307,7 +316,7 @@ We'd love your help — whether it's a typo fix, a new plugin, or a deep core ch
 
 ## 📄 License
 
-[MIT](./LICENSE) © floatboat
+MIT © floatboat
 
 ---
 

@@ -15,11 +15,11 @@
 
 ## 🗺️ 路线图 (TL;DR)
 
-我们按优先级分层迭代 —— **P0 是当前正在做的事**。
+我们按优先级分层迭代 —— **P0 基线已完成，下一步进入 P1**。
 
 | 优先级 | 主题 | 关键项 |
 |---|---|---|
-| **P0 — 当前** | 核心 API 完善 | `getSelectedText()`、斜杠命令排序、`<Editor />` `onReady`、TS 严格类型覆盖 |
+| **P0 — 基线** | 核心 API 完善 | `getSelectedText()`、斜杠命令排序、`<Editor />` `onReady`、TS 严格类型检查基线 |
 | **P1 — 下一阶段** | 进阶功能 | 多光标、正则搜索、撤销/重做分组、Widget API 标准化、Electron 打包优化 |
 | **P2 — 中期** | 体验与生态 | 高级工具栏（emoji / 表格 / 颜色）、模糊搜索、滚动同步预览、Web Component 包装 |
 | **P3 — 长期** | 协作能力 | 实时 CRDT 协作、共享评论 / @提醒、插件热重载 |
@@ -242,7 +242,14 @@ const myPlugin: NexusPlugin = {
   widgets: [{
     nodeType: "code",
     match: (node) => node.lang === "mermaid",
-    render: (node, source) => renderMermaidChart(source),
+    display: "block",        // "block" | "inline"（规范字段，取代旧的 `block`）
+    eventPolicy: "widget",   // "widget" | "editor"（规范字段，取代旧的 `ignoreEvents`）
+    render: (node, source, ctx) => {
+      const el = renderMermaidChart(source);
+      // 从自定义入口进入原始 Markdown 编辑：
+      el.querySelector(".edit")?.addEventListener("click", () => ctx?.enterEditMode());
+      return el;
+    },
     destroy: (el) => el.remove(),
   }],
 
@@ -250,6 +257,8 @@ const myPlugin: NexusPlugin = {
   cmExtensions: [myCodeMirrorExtension],
 };
 ```
+
+> `block` 与 `ignoreEvents` 仍作为旧版兼容别名保留（`block: false` ≡ `display: "inline"`，`ignoreEvents: true` ≡ `eventPolicy: "widget"`）；两者同时设置时以规范字段为准。完整 Widget API 见 [`packages/core/README.md`](./packages/core/README.md#widget-api)。
 
 </details>
 
@@ -299,7 +308,7 @@ pnpm dev:electron-demo
 
 - [CONTRIBUTING.zh.md](./CONTRIBUTING.zh.md) —— 分支命名、Conventional Commits scope 白名单、何时需要走 OpenSpec、测试矩阵。
 - [.github/PULL_REQUEST_TEMPLATE.md](./.github/PULL_REQUEST_TEMPLATE.md) —— PR 描述模板（双语）。
-- [openspec/AGENTS.md](./openspec/AGENTS.md) —— 新 capability 或破坏性 API 变更必读。
+- [AGENTS.md](./AGENTS.md) + [openspec/config.yaml](./openspec/config.yaml) —— OpenSpec 1.5 agent 工作流与项目规则，新 capability 或破坏性 API 变更必读。
 
 > 🟢 **新手友好的 issue** 打了 [`good first issue`](https://github.com/floatboatai/Nexus-Editor/labels/good%20first%20issue) 标签 —— 不熟代码库的话，从这里开始。
 
@@ -307,7 +316,7 @@ pnpm dev:electron-demo
 
 ## 📄 许可证
 
-[MIT](./LICENSE) © floatboat
+MIT © floatboat
 
 ---
 
